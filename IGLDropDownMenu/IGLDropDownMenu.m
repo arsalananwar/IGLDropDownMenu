@@ -22,6 +22,7 @@
 @property (nonatomic, assign) CGRect oldFrame;
 @property (nonatomic, assign) CGRect originalFrame;
 @property (nonatomic, copy) void (^selectedItemChangeBlock)(NSInteger selectedIndex);
+@property (nonatomic, copy) void (^willExpandBlock)(void);
 
 @end
 
@@ -30,26 +31,12 @@
 - (instancetype)initWithFrame:(CGRect)frame
 {
     self = [super initWithFrame:frame];
+    self.originalFrame = frame;
     if (self) {
-        [self commonInit];
+        [self resetParams];
+        self.menuButton = [[IGLDropDownItem alloc] init];
     }
     return self;
-}
-
-- (instancetype)initWithCoder:(NSCoder *)aDecoder
-{
-    self = [super initWithCoder:aDecoder];
-    if (self) {
-        [self commonInit];
-    }
-    return self;
-}
-
-- (void)commonInit
-{
-    self.originalFrame = self.frame;
-    [self resetParams];
-    self.menuButton = [[IGLDropDownItem alloc] init];
 }
 
 - (void)setFrame:(CGRect)frame
@@ -62,12 +49,11 @@
 {
     _expanding = expanding;
     
+    if (self.willExpandBlock && expanding) {
+        self.willExpandBlock();
+    }
+    
     [self updateView];
-}
-
-- (void)setDropDownItems:(NSArray *)dropDownItems
-{
-    _dropDownItems = [[NSArray alloc] initWithArray:dropDownItems copyItems:YES];
 }
 
 - (CGFloat)alphaOnFold
@@ -201,7 +187,7 @@
     }
     
     [self.menuButton setFrame:CGRectMake(self.offsetX + 0, 0, self.itemSize.width, self.itemSize.height)];
-
+    
     if (self.direction == IGLDropDownMenuDirectionUp) {
         if (self.isExpanding) {
             height += buttonHeight;
@@ -476,6 +462,10 @@
 - (void)addSelectedItemChangeBlock:(void (^)(NSInteger))block
 {
     self.selectedItemChangeBlock = block;
+}
+
+- (void)addWillExplandBlock:(void (^)(void))block{
+    self.willExpandBlock = block;
 }
 
 - (void)selectChangeToItem:(IGLDropDownItem*)item
